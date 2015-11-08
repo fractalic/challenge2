@@ -12,7 +12,7 @@ Upon arriving at a page, the crawler should
 1. Search if the page contains the desired content. If it does, it stores
 	* The link identifying the page;
 	* The whole HTML content of the page, either to be used for later processing, or for caching purposes.
-2. Not revisit a page that has been visited before. This is achieved by storing the visited links in a **database**. 
+2. Not revisit a page that has been visited before. This is achieved by storing the visited links in a **database**. (look below for instructions on how to setup you database server.)
 
 ##The Task: Harvesting Job Opennings
 Your task is write a **multithreaded** web crawler in Java *from the scratch* to **collect job offers** posted on the internet. 
@@ -31,11 +31,21 @@ All of this information should be stored in suitable tables in your database.
 
 Of course, there is no standard format in which those pieces of information are written across different web pages; therefore, you will have to manually look at online job postings to determine a common pattern in which job postings are written. Your regular expressions should be general enough to handle the format discrepancies as much as possible, while at the same time be specific enough to minimize misdetections.
 
-
      
-You are **not** allowed to use any external crawling libraries, such as crawler4j.
+**Note:** You are **not** allowed to use any external crawling libraries, such as crawler4j.
+
+### Synchronization
 
 
+### Selection Policy: Scheduling page visits
+There are two things to consider when visiting pages:
+
+1. The Selection Policy: The order in which the links contained in a page are visited next, and
+2. Exclusion of already visited pages.
+
+The selection policy could be any of the well-known graph traversal algorithms, such as BFS or DFS. One of your subtasks is to determine the selection policy that best suits our application.
+
+To prevent your crawler from visiting a link that has already been visited, one way is to add a flag field in your table of visited links in the database (you may call it IS_VISITED), and look-up this field *if the link exists*; i.e., has been added but not visited yet. 
 
 
 ##Setting up your Environment
