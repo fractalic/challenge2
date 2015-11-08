@@ -9,12 +9,12 @@ In the most basic scenario, the web crawler starts at a *root* page, and looks f
 
 Upon arriving at a page, the crawler should
 
-1. Search if the page contains the desired content. If it does, it stores
+1. Search the page for the desired content. If it finds the content its looking for, then it stores
 	* The link identifying the page;
 	* The whole HTML content of the page, either to be used for later processing, or for caching purposes.
 2. Not revisit a page that has been visited before. This is achieved by storing the visited links in a **database**. (look below for instructions on how to setup you database server.)
 
-##The Task: Harvesting Job Opennings
+##The Task: Harvesting Job Openings
 Your task is write a **multithreaded** web crawler in Java *from the scratch* to **collect job offers** posted on the internet. 
 
 Your crawler should start crawling from a set of *seed* pages, spawning a thread for each seed page. Typically the seeds will be company pages, such microsoft.com, qualcomm.com, etc. Your crawler should be able to detect pages that contain job postings. You will do this by using suitable **regular expressions**. *There will be significant creativity in designing your regular expressions*.
@@ -26,6 +26,7 @@ Once your crawler detects that a page contains a job posting, it should extract 
 3. Location;
 4. Job title;
 5. Job Description.
+6. Job posting ID, if available.
 
 All of this information should be stored in suitable tables in your database.
 
@@ -48,25 +49,33 @@ To prevent your crawler from visiting a link that has already been visited, one 
 ### Synchronization
 There will be several threads traversing and indexing pages, and those threads will access the database simultaneously. You will have to synchronize access to your database such that the consistency of the data is preserved. 
 
-Moreover, even if each thread maintains its own graph, say, of links scheduled to be visited or the ones visited already, it might be the case that another thread traverses through links that lead to a page in another thread's graph. In this assignment this is a situation that we do not allow, and we require a page to be *locked* during the time a thread is working on it. In other words, if a thread is working on a page and another thread attempts to visit the same page, then this other thread will be blocked. In this situation, a plausible courses of action is to allow the blocked thread to access another page. **But how would a blocked thread choose another page to visit next? Randomized way ? Or the next page in the BFS queue?**
+Moreover, even if each thread maintains its own graph, say, of links scheduled to be visited or the ones visited already, it might be the case that another thread traverses through links that lead to a page in another thread's graph. In this assignment this is a situation that we do not allow, and we require a page to be *locked* during the time a thread is working on it. In other words, if a thread is working on a page and another thread attempts to visit the same page, then this other thread will be blocked. In this situation, a plausible courses of action is to allow the blocked thread to access another page. **But how would a blocked thread choose another page to visit next? Randomized fashion ? Or the next page in the BFS queue, say ?**
 
+###Crawler Startup/Termination
 
+At startup, your crawler should select a subset of the pages not visited so far, and spawn a thread for each page, that will then go on to traverse the web and build its "page" graph. One way to choose the initial "seeds" is to pick them randomly from the database. Other schemes are possible, and you are free to decide how to do it.
+
+Your should provide the ability for the user to terminate the crawler at any time. When your crawler receives a command to terminate, it should properly shut down all threads gracefully, and ensure that the database is in a consistent state. If a thread is working on a page, then it should store the state of the page it was working on (finished, processing, etc). Moreover, all links that are scheduled to be visited should of course be stored in the database so that crawling can be resumed from where it stopped.
 
 ##Setting up your Environment
 You will use a database to handle the storage component of the crawler. You will use **MariaDB** to create a relational database and store the crawled web content in tables.
 
-[MariaDB](https://mariadb.org) is a new replacement for the infamous MySQL. It is open source, and it significantly extends the functionality of MySQL without sacrificing compatibility. The easiest way to install MariaDB is through ApacheFriends' [XAMPP](https://www.apachefriends.org/index.html) installer. Although XAMPP installs other things related to web development, such as Apache server, PHP, etc, we will use it because it also installs phpMyAdmin, which is a graphical interface, through the web browser, that allows you to  access MariaDB and perform all the operations you need, such as database creation, deletion, table creation, etc.
+[MariaDB](https://mariadb.org) is a new replacement for the infamous MySQL. It is open source, and it significantly extends the functionality of MySQL without sacrificing compatibility. The easiest way to install MariaDB is through ApacheFriends' [XAMPP](https://www.apachefriends.org/index.html) installer. Although XAMPP installs other things related to web development, such as Apache server, PHP, etc, we will use it because it also installs phpMyAdmin, which is a graphical interface, through the web browser, that allows you to  access MariaDB and perform all the operations you need, such as database creation, deletion, table creation, etc. Once you install XAMPP and start the database server (through XAMPP's GUI), you will be ready to create a database and the associated tables.
 
-Once you install XAMPP and start the database server (through XAMPP's GUI), you will be ready to create a database.  
+To access the database from your application, you have to install the MariaDB Connector/J. Use [this download link](https://mariadb.com/kb/en/mariadb/about-mariadb-connector-j/). Once MariaDB Connector/J is installed, you will use it as the database connector (i.e., import `org.mariadb.jdbc.Driver`, not `com.mysql.jdbc.Driver`). Read the instructions in the link above carefully.
 
+Finally, you will use JDBC to create SQL statements from your Java program and issue queries to your database. Read [this lesson](https://docs.oracle.com/javase/tutorial/jdbc/basics/) on JDBC to get you started quickly.
+
+ 
 
 ##Testing
 
 You should develop testing strategies to ensure at least the following:
 
 1. Proper synchronization of database access; i.e., that no one thread overwrites the data written by another thread, and no two or more threads access the same page or job row at the same time; 
-2. Proper synchronization of thread visits of pages;
-3. Your crawler extracts   
+2. Proper synchronization of thread page visits;
+3. Your crawler is able to extract as many job postings as possible, and once a job is found, that your crawler is able to successfully extract as much of the job information mentioned above as possible; 
+4. You have to test your crawler with 5, 20, 100, and 1000 threads. Devise a scheme to measure the performance of your crawler as the number of threads grows.
 
 ## Submission
 
